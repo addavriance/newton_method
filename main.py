@@ -69,13 +69,15 @@ class NewtonProcessor:
         :return: Equations
         """
         eq = f"""
-    x = {label}({var})
-    f({var}) * f''({var}) = {f(var) * self.processor.derivative(var)} > 0
+    Первоначальная выборка приближения по формуле c = f(x) * f''(x) > 0.
+    
+    x = {label} = {var}
+    f({var}) * f''({var}) = {self.function(var) * self.processor.derivative(var)} > 0
     
     Первое приближение:
     """ if is_initial_sample else ""
         eq += f"""
-             f({label})               {f(var)}
+             f({label})               {self.function(var)}
     c = {label} - ———————— = {var} - ———————————— = {c}
              f'({label})              {self.processor.derivative(var)}
                 """
@@ -106,7 +108,7 @@ class NewtonProcessor:
 
             self.working = True
 
-            equation.append(f"Первоначально найденный интервал смены знаков: [{self.a}, {self.b}].\n")
+            equation.append(f"\n\tПервоначально найденный интервал смены знаков: [{self.a}, {self.b}].\n")
 
             if self.function(self.a) * self.function(self.b) >= 0:
                 raise ValueError("Функция должна иметь разные знаки на концах интервала [a, b].")
@@ -114,22 +116,12 @@ class NewtonProcessor:
             while abs(self.b - self.a) >= self.epsilon and self.working:
                 statuses = [["\033[9m", "\033[0m"], ["\033[9m", "\033[0m"]]
 
-                if len(equation) == 1:
-                    eq = """Первоначальная выборка приближения по формуле c = f(x) * f''(x) > 0.
-                    """
-                    if self.function(self.a) * self.processor.double_derivative(self.a) > 0:
-                        c = self.a - (f(self.a) / self.processor.derivative(self.a))
-                        eq += self.generate_equations("a", self.a, True, c)
-                    else:
-                        c = self.b - (f(self.b) / self.processor.derivative(self.b))
-                        eq += self.generate_equations("b", self.b, True, c)
-                else:
-                    if self.a != a:
-                        c = self.a - (f(self.a) / self.processor.derivative(self.a))
-                        eq = self.generate_equations("a", self.a, False, c)
-                    else:
-                        c = self.b - (f(self.b) / self.processor.derivative(self.b))
-                        eq = self.generate_equations("b", self.b, False, c)
+                if self.function(self.a) * self.processor.double_derivative(self.a) > 0 or self.a != a:
+                    c = self.a - (self.function(self.a) / self.processor.derivative(self.a))
+                    eq = self.generate_equations("a", self.a, len(equation) == 1, c)
+                elif self.b != b:
+                    c = self.b - (self.function(self.b) / self.processor.derivative(self.b))
+                    eq = self.generate_equations("b", self.b, len(equation) == 1, c)
 
                 old_a, old_b = float(self.a), float(self.b)
 
@@ -148,15 +140,15 @@ class NewtonProcessor:
                     self.a = c
 
                 if self.working:
-                    eq += f"\n\t\t{self._get_signs([f(old_a), f(c)])} {statuses[1][0]}{[old_a, c]}{statuses[1][1]} " \
-                          f"| {self._get_signs([f(c), f(old_b)])} {statuses[0][0]}{[c, old_b]}{statuses[0][1]}\n"
+                    eq += f"\n\t\t{self._get_signs([self.function(old_a), self.function(c)])} {statuses[1][0]}{[old_a, c]}{statuses[1][1]} " \
+                          f"| {self._get_signs([self.function(c), self.function(old_b)])} {statuses[0][0]}{[c, old_b]}{statuses[0][1]}\n"
                     equation.append(eq)
 
             solution = (self.a + self.b) / 2
 
             if self.working:
                 equation.append(f"Ответ x = (a + b) / 2 = {solution}. Так как b - a < epsilon.")
-                self.solutions.append(solution)  # Добавляем конечное приближение в качестве решения
+                self.solutions.append(solution)
                 self.equations.append(equation)
         return self.solutions
 
@@ -166,21 +158,3 @@ class NewtonProcessor:
             print(f"Решение {solution_index + 1}:")
             for step_index, step in enumerate(solution):
                 print(f"\t{step_index + 1}. {step}")
-
-
-def f(x: int | float) -> int | float:
-    return x**2-x**3-32  # replace with your function
-
-
-# example usage
-
-epsilon = 10 ** -3
-
-processor = NewtonProcessor(f, epsilon=epsilon)
-
-processor.find_solutions()
-processor.print_last_equations()
-
-
-
-
