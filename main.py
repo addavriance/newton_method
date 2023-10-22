@@ -106,6 +106,8 @@ class NewtonProcessor:
             self.a = a
             self.b = b
 
+            eq = ""
+
             self.working = True
 
             equation.append(f"\n\tПервоначально найденный интервал смены знаков: [{self.a}, {self.b}].\n")

@@ -104,19 +104,3 @@ class LagrangeProcessor:
         self.solutions.append(double_derivative)
 
         return double_derivative
-
-
-def f(x):
-    return (3*x**2-1)*(x**3+2*x) # Replace with your function.
-
-# Example usage
-
-
-p = LagrangeProcessor(function=f)
-
-p.derivative(1.33)
-print(p.equations[0])
-p.double_derivative(1.33)
-print(p.equations[1])
-
-
